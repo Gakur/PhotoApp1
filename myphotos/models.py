@@ -41,5 +41,23 @@ class Image(models.Model):
 
 class Profile(models.Model):
     profilephoto = models.ImageField()
-    bio = models.CharField(max_length=200)
+    bio = models.TextField(max_length=200)
+    username = models.CharField(max_length=30)
+    firstname = models.CharField(max_length=30)
+    lastname = models.CharField(max_length=30)
+
+
+    def __str__(self):
+        return self.username
+
+    def save_profile(self):
+        self.save()
+
+    def delete_profile(self):
+        self.delete()
+    
+    @classmethod 
+    def search_profile(cls,search_term):
+        got_profiles = cls.objects.filter(first_name__icontains = search_term)
+        return got_profiles
         
