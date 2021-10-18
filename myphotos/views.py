@@ -60,14 +60,14 @@ def user_profile(request, username):
         'follow_status': follow_status
     }
     print(followers)
-    return render(request, 'instagram/user_profile.html', params)
+    return render(request, 'user_profile.html', params)
 
 
 @login_required(login_url='/accounts/login/')
 def single_pic(request,pic_id):
 	image = Image.objects.get(id= pic_id)
 
-	return render(request, 'my-inst/single_pic.html',{"image": image})
+	return render(request, 'single_pic.html',{"image": image})
 
 def like(request):
     image = get_object_or_404(Image, id=request.POST.get('id'))
@@ -85,7 +85,7 @@ def like(request):
         'total_likes': image.total_likes()
     }
     if request.is_ajax():
-        html = render_to_string('instagram/like_section.html', params, request=request)
+        html = render_to_string('like.html', params, request=request)
         return JsonResponse({'form': html})
 
 
@@ -95,11 +95,11 @@ def search_results(request):
         searched_profiles = Profile.search_profile(search_term)
         message = f"{search_term}"
 
-        return render(request, 'search_pic.html',{"message":message,"pics": searched_profiles})
+        return render(request, 'search.html',{"message":message,"pics": searched_profiles})
 
     else:
         message = "You haven't searched for any term"
-        return render(request, 'search_pic.html',{"message":message})
+        return render(request, 'search.html',{"message":message})
 
 
 @login_required(login_url='/accounts/login/')
@@ -131,7 +131,7 @@ def upload_profile(request):
             form = UploadForm()
 
 
-    return render(request,'upload_profile.html',{"title":title,"current_user":current_user,"form":form})
+    return render(request,'profile.html',{"title":title,"current_user":current_user,"form":form})
 
 
 def follow(request, to_follow):
