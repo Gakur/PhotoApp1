@@ -1,5 +1,6 @@
 from django.db import models
 from django.db.models.manager import Manager
+from django.contrib.auth.models import User
 
 # Create your models here.
 class Image(models.Model):
@@ -75,4 +76,14 @@ class Comment(models.Model):
     def delete_comment(self):
         self.delete()
 
-	
+class Likes(models.Model):
+	user = models.ForeignKey(Profile,null=True)
+
+	def __int__(self):
+		return self.name    
+
+	def unlike(self):
+		self.delete()
+
+	def save_like(self):
+		self.save() 	
