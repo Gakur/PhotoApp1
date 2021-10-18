@@ -4,10 +4,10 @@ from django.contrib.auth.models import User
 
 # Create your models here.
 class Image(models.Model):
-    image = models.ImageField()
+    image = models.ImageField(upload_to='images/')
     name = models.CharField(max_length=30)
-    imagecaption = models.TextField()
-    profile = models.ForeignKey(pk= id)
+    imagecaption = models.TextField(max_length=250, blank=True)
+    profile = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
     likes = models.CharField(max_length=30)
     comments = models.CharField(max_length=150)
 
@@ -41,7 +41,7 @@ class Image(models.Model):
        
 
 class Profile(models.Model):
-    profilephoto = models.ImageField()
+    profilephoto = models.ImageField(upload_to='images/', default='default.png')
     bio = models.TextField(max_length=200)
     username = models.CharField(max_length=30)
     firstname = models.CharField(max_length=30)
@@ -62,22 +62,32 @@ class Profile(models.Model):
         got_profiles = cls.objects.filter(first_name__icontains = search_term)
         return got_profiles
 
+
 class Comment(models.Model):
-	user = models.ForeignKey(User, null= True)
-	pic = models.ForeignKey(Image, null= True,related_name='comment')
+	user = models.ForeignKey(User, on_delete=models.CASCADE, null= True)
+	pic = models.ForeignKey(Image, on_delete=models.CASCADE, null= True,related_name='comment')
 	comment= models.TextField( blank=True)
 	
+	def __str__(self):
+		return self.comment
+
+
+	def save_comment(self):
+		self.save()
+
+	def delete_comment(self):
+		self.delete()
+
+class Follow(models.Model):
+    follower = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='following')
+    followed = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='followers')
+
     def __str__(self):
-        return self.comment
-        
-    def save_comment(self):
-        self.save()        
-    
-    def delete_comment(self):
-        self.delete()
+        return f'{self.follower} Follow'        
+
 
 class Likes(models.Model):
-	user = models.ForeignKey(Profile,null=True)
+	user = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True)
 
 	def __int__(self):
 		return self.name    
