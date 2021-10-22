@@ -1,9 +1,9 @@
 from django import forms
-from django.http import request, JsonResponse
+from django.http import request, JsonResponse, HttpResponseRedirect
 from django.shortcuts import render, redirect, get_object_or_404
 from django.template.loader import render_to_string
 from django.contrib.auth.decorators import login_required
-from . forms import ProfileForm, UploadForm, CommentForm
+from . forms import ProfileForm, UserForm, ImageForm, CommentForm
 from django.contrib.auth.models import User
 
 from myphotos.models import Image, Profile, Comment, Follow
@@ -11,10 +11,24 @@ from myphotos.models import Image, Profile, Comment, Follow
 # Create your views here.
 @login_required(login_url='/accounts/login')
 def index(request):
-    pic_images = Image.objects.all()
-    title = 'Photos'
-    print(pic_images)
-    return render (request, 'index.html', {"pic_images": pic_images, "title": title})
+    images = Image.objects.all()
+    users = User.objects.exclude(id=request.user.id)
+    if request.method == 'POST':
+        form = ImageForm(request.POST, request.FILES)
+        if form.is_valid():
+            post = form.save(commit=False)
+            post.user = request.user.profile
+            post.save()
+            return HttpResponseRedirect(request.path_info)
+    else:
+        form = ImageForm()
+    params = {
+        'images': images,
+        'form': form,
+        'users': users,
+
+    }
+    return render(request, 'photos/index.html', params)
 
 
 @login_required(login_url='/accounts/login/')
@@ -36,14 +50,14 @@ def comment(request,id):
 	else:
 		form = CommentForm()
 
-	return render(request,'comment.html',{"form":form})  
+	return render(request,'photos/comment.html',{"form":form}) 
 
 
 @login_required(login_url='/accounts/login/')
 def user_profile(request, username):
     user_prof = get_object_or_404(User, username=username)
     if request.user == user_prof:
-        return redirect('profile', username=request.user.username)
+        return redirect('upload_profile', username=request.user.username)
     user_posts = user_prof.profile.posts.all()
     
     followers = Follow.objects.filter(followed=user_prof.profile)
@@ -60,7 +74,7 @@ def user_profile(request, username):
         'follow_status': follow_status
     }
     print(followers)
-    return render(request, 'user_profile.html', params)
+    return render(request, 'photos/user_profile.html', params)
 
 
 @login_required(login_url='/accounts/login/')
@@ -95,43 +109,33 @@ def search_results(request):
         searched_profiles = Profile.search_profile(search_term)
         message = f"{search_term}"
 
-        return render(request, 'search.html',{"message":message,"pics": searched_profiles})
+        return render(request, 'photos/search.html',{"message":message,"pics": searched_profiles})
 
     else:
         message = "You haven't searched for any term"
-        return render(request, 'search.html',{"message":message})
+        return render(request, 'photos/search.html',{"message":message})
 
 
 @login_required(login_url='/accounts/login/')
 def upload_profile(request):
-    current_user = request.user 
-    title = 'Upload Profile'
-    try:
-        requested_profile = Profile.objects.get(user_id = current_user.id)
-        if request.method == 'POST':
-            form = UploadForm(request.POST,request.FILES)
+    images = request.user.profile.posts.all()
+    if request.method == 'POST':
+        user_form = UserForm(request.POST, instance=request.user)
+        prof_form = ProfileForm(request.POST, request.FILES, instance=request.user.profile)
+        if user_form.is_valid() and prof_form.is_valid():
+            user_form.save()
+            prof_form.save()
+            return HttpResponseRedirect(request.path_info)
+    else:
+        user_form = UserForm(instance=request.user)
+        prof_form = ProfileForm(instance=request.user.profile)
+    params = {
+        'user_form': user_form,
+        'prof_form': prof_form,
+        'images': images,
 
-            if form.is_valid():
-                requested_profile.profile_pic = form.cleaned_data['profile_pic']
-                requested_profile.bio = form.cleaned_data['bio']
-                requested_profile.username = form.cleaned_data['username']
-                requested_profile.save_profile()
-                return redirect( user_profile )
-        else:
-            form = UploadForm()
-    except:
-        if request.method == 'POST':
-            form = UploadForm(request.POST,request.FILES)
-
-            if form.is_valid():
-                new_profile = Profile(profile_pic = form.cleaned_data['profile_pic'],bio = form.cleaned_data['bio'],username = form.cleaned_data['username'])
-                new_profile.save_profile()
-                return redirect( user_profile )
-        else:
-            form = UploadForm()
-
-
-    return render(request,'profile.html',{"title":title,"current_user":current_user,"form":form})
+    }
+    return render(request, 'photos/upload_profile.html', params)
 
 
 def follow(request, to_follow):
