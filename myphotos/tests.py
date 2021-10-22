@@ -3,7 +3,7 @@ from .models import Image, Profile, Comment , Follow, Likes
 from django.contrib.auth.models import User
 
 # Create your tests here.
-class TestPost(TestCase):
+class TestImage(TestCase):
     def setUp(self):
         self.profile_test = Profile(name='peter', user=User(username='peter'))
         self.profile_test.save()
