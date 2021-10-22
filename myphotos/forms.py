@@ -1,23 +1,34 @@
 from django import forms
-from .models import Profile, Comment
+from .models import Image, Profile, Comment
+from django.contrib.auth.models import User
+
+
+class UserForm(forms.ModelForm):
+    email = forms.EmailField(max_length=254, help_text='Required. Inform a valid email address.')
+
+    class Meta:
+        model = User
+        fields = ('username', 'email')
 
 
 class ProfileForm(forms.ModelForm):
-	model = Profile
-	username = forms.CharField(label='Username',max_length = 30)
-	
-	bio = forms.CharField(label='Image Caption',max_length=500)
-	profile_pic = forms.ImageField(label = 'Image Field')
+    class Meta:
+        model = Profile
+        fields = ['username', 'profilephoto', 'bio']
 
 
-class UploadForm(forms.ModelForm):
-	class Meta:
-		model = Profile
-		
-		exclude = ['user']
+class ImageForm(forms.ModelForm):
+    class Meta:
+        model = Image
+        fields = ('image', 'imagecaption')
+
 
 class CommentForm(forms.ModelForm):
-	class Meta:
-		model = Comment
-		
-		exclude = ['user','pic',]
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['comment'].widget = forms.TextInput()
+        self.fields['comment'].widget.attrs['placeholder'] = 'Add a comment...'
+
+    class Meta:
+        model = Comment
+        fields = ('comment',)
