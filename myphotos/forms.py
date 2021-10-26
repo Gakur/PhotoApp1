@@ -5,9 +5,9 @@ from django.contrib.auth.models import User
 
 class UserForm(forms.ModelForm):
     email = forms.EmailField(max_length=254, help_text='Required. Inform a valid email address.')
-    your_name = forms.CharField(label='Enter your name', max_length=30)
-    # fields = ('username', 'email')
-
+    class Meta:
+        model = User
+        fields = ('username', 'email')
 
 class ProfileForm(forms.ModelForm):
     class Meta:
