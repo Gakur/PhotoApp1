@@ -16,9 +16,9 @@ def index(request):
     if request.method == 'POST':
         form = ImageForm(request.POST, request.FILES)
         if form.is_valid():
-            post = form.save(commit=False)
-            post.user = request.user.profile
-            post.save()
+            image = form.save()
+            image.user = request.user.profile
+            image.save()
             return HttpResponseRedirect(request.path_info)
     else:
         form = ImageForm()
@@ -57,7 +57,7 @@ def comment(request,id):
 def user_profile(request, username):
     user_prof = get_object_or_404(User, username=username)
     if request.user == user_prof:
-        return redirect('upload_profile', username=request.user.username)
+        return redirect('profile', username=request.user.username)
     user_posts = user_prof.profile.posts.all()
     
     followers = Follow.objects.filter(followed=user_prof.profile)
@@ -68,7 +68,7 @@ def user_profile(request, username):
         else:
             follow_status = False
     params = {
-        'user_prof': user_prof,
+        'user_profile': user_profile,
         'user_posts': user_posts,
         'followers': followers,
         'follow_status': follow_status
@@ -78,10 +78,10 @@ def user_profile(request, username):
 
 
 @login_required(login_url='/accounts/login/')
-def single_pic(request,pic_id):
-	image = Image.objects.get(id= pic_id)
+def image(request,image_id):
+	image = Image.objects.get(id= image_id)
 
-	return render(request, 'single_pic.html',{"image": image})
+	return render(request, 'image.html',{"image": image})
 
 def like(request):
     image = get_object_or_404(Image, id=request.POST.get('id'))
@@ -117,25 +117,35 @@ def search_results(request):
 
 
 @login_required(login_url='/accounts/login/')
-def upload_profile(request):
-    images = request.user.profile.posts.all()
-    if request.method == 'POST':
-        user_form = UserForm(request.POST, instance=request.user)
-        prof_form = ProfileForm(request.POST, request.FILES, instance=request.user.profile)
-        if user_form.is_valid() and prof_form.is_valid():
-            user_form.save()
-            prof_form.save()
-            return HttpResponseRedirect(request.path_info)
-    else:
-        user_form = UserForm(instance=request.user)
-        prof_form = ProfileForm(instance=request.user.profile)
-    params = {
-        'user_form': user_form,
-        'prof_form': prof_form,
-        'images': images,
+def profile(request):
+    current_user = request.user 
+    title = 'Upload Profile'
+    try:
+        requested_profile = Profile.objects.get(user_id = current_user.id)
+        if request.method == 'POST':
+            form = ProfileForm(request.POST,request.FILES)
 
-    }
-    return render(request, 'photos/upload_profile.html', params)
+            if form.is_valid():
+                requested_profile.profile_photo = form.cleaned_data['profile_photo']
+                requested_profile.bio = form.cleaned_data['bio']
+                requested_profile.username = form.cleaned_data['username']
+                requested_profile.save_profile()
+                return redirect( index )
+        else:
+            form = ProfileForm()
+    except:
+        if request.method == 'POST':
+            form = ProfileForm(request.POST,request.FILES)
+
+            if form.is_valid():
+                new_profile = Profile(profile_photo = form.cleaned_data['profile_photo'],bio = form.cleaned_data['bio'],username = form.cleaned_data['username'])
+                new_profile.save_profile()
+                return redirect( index )
+        else:
+            form = ProfileForm()
+    
+    return render(request, 'photos/upload_profile.html', {"form": form})
+
 
 
 def follow(request, to_follow):

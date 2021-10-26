@@ -10,7 +10,7 @@ urlpatterns=[
     path('user_profile/<username>/', views.user_profile, name='user_profile'),
     path('like', views.like, name='like_post'),
     path('search/', views.search_results, name='search'),
-    path('upload_profile/', views.upload_profile, name='upload_profile'),
+    path('profile/<username>/', views.profile, name='profile'),
     path('follow/<to_follow>', views.follow, name='follow'),
 ]
 
